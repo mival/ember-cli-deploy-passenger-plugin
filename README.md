@@ -1,11 +1,11 @@
-# ember-cli-deploy-passenger-plugin
+# ember-cli-deploy-passenger
 
 This README outlines the details of collaborating on this Ember addon.
 
 ## Installation
 
 * `git clone <repository-url>` this repository
-* `cd ember-cli-deploy-passenger-plugin`
+* `cd ember-cli-deploy-passenger`
 * `npm install`
 * `bower install`
 

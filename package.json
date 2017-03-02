@@ -1,24 +1,28 @@
 {
-  "name": "ember-cli-deploy-passenger-plugin",
-  "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "name": "ember-cli-deploy-passenger",
+  "version": "1.0.0",
+  "description": "An ember-cli-deploy plugin to upload app.js, npm install and passenger reboot.",
   "keywords": [
-    "ember-addon"
+    "ember-addon",
+    "ember-cli-deploy-plugin"
   ],
   "license": "MIT",
-  "author": "",
+  "author": "iQuest s.r.o",
   "directories": {
     "doc": "doc",
     "test": "tests"
   },
-  "repository": "",
+  "repository": "https://github.com/mival/ember-cli-deploy-passenger-plugin",
   "scripts": {
-    "build": "ember build",
-    "start": "ember server",
     "test": "ember try:each"
   },
   "dependencies": {
-    "ember-cli-babel": "^5.1.7"
+    "core-object": "^3.1.0",
+    "ember-cli-babel": "^5.1.7",
+    "ember-cli-deploy-plugin": "^0.2.9",
+    "node-fs": "^0.1.7",
+    "ssh2": "^0.5.4",
+    "untildify": "^3.0.2"
   },
   "devDependencies": {
     "broccoli-asset-rev": "^2.4.5",
