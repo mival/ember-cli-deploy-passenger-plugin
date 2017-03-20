@@ -22,6 +22,7 @@
     "ember-cli-deploy-plugin": "^0.2.9",
     "node-fs": "^0.1.7",
     "rsync": "^0.6.1",
+    "simple-git": "^1.67.0",
     "ssh2": "^0.5.4",
     "untildify": "^3.0.2"
   },

@@ -7,6 +7,7 @@ var sshClient  = require('./lib/ssh-client');
 var path       = require('path');
 var Rsync      = require('rsync');
 var exec       = require('child_process').exec;
+var simpleGit  = require('simple-git');
 
 module.exports = {
   name: 'ember-cli-deploy-passenger',
@@ -34,7 +35,8 @@ module.exports = {
         directory: 'tmp/deploy-dist/.',
         exclude: false,
         flags: 'rtvu',
-        displayCommands: false
+        displayCommands: false,
+        appFiles: []
       },
 
       configure: function (context) {
@@ -47,7 +49,7 @@ module.exports = {
           port: this.readConfig('port'),
           privateKeyPath: this.readConfig('privateKeyPath'),
           passphrase: this.readConfig('passphrase'),
-          agent: this.readConfig('agent')
+          agent: this.readConfig('agent'),
         };
 
         this._client = new this._sshClient(options);
@@ -55,14 +57,45 @@ module.exports = {
       },
 
       willBuild(context) {
+        var _this = this;
         return new Promise(function(resolve, reject) {
-          var deployEnvLn = 'rm .env.deploy && ln -s .env.' + context.deployTarget+' .env.deploy';
-          exec(deployEnvLn, function(error) {
+          let git = simpleGit();
+          let deployTarget = context.deployTarget;
+          _this.log('Deploying branch ' + deployTarget + ' to ' + _this.readConfig('host') + '.');
+          // get git status
+          git.status(function(error, statusSummary){
             if (error) {
-              reject(error);
+              reject(error)
             }
-            resolve();
-          })
+            if (statusSummary.files.length > 0) { //git is dirty
+              reject('Git: working directory is dirty');
+            }
+
+            // change branch
+            git.branchLocal(function(errors, branchSummary){
+              if (error) {
+                reject(error)
+              }
+              if (branchSummary.all.indexOf(deployTarget) !== -1) {
+                git.checkout(deployTarget, function(error, success) {
+                  if (error) {
+                    reject(error)
+                  }
+                  _this.log('Git: branch ' + deployTarget + ' checked out', {verbose: true});
+                  var deployEnvLn = 'rm .env.deploy && ln -s .env.' + deployTarget+' .env.deploy';
+                  exec(deployEnvLn, function(error) {
+                    if (error) {
+                      reject(error);
+                    }
+                    resolve();
+                  });
+                })
+              } else {
+                reject('Git: no local branch '+deployTarget);
+              }
+            });
+          });
+
         });
       },
 
@@ -72,7 +105,7 @@ module.exports = {
 
         return Promise.all([
           this._uploadApp(context),
-          this._uploadAppJs(deployPath) // upload app.js
+          this._uploadAppFiles(deployPath) // upload app files
         ]);
       },
 
@@ -88,8 +121,7 @@ module.exports = {
       },
 
       didActivate() {
-        var deployPath = path.posix.join(this.readConfig('path'), '/');
-        return this._appRestart(deployPath); // restart app
+        return this._appRestart(this.readConfig('path')); // restart app
       },
 
       didDeploy: function (context) {
@@ -116,7 +148,7 @@ module.exports = {
 
       _appRestart(appPath) {
         var _this = this;
-        var touchCmd = 'passenger-config restart-app ' + appPath;
+        var touchCmd = '/usr/bin/env passenger-config restart-app '+appPath+' --ignore-app-not-running';
         this.log('Restarting');
         return this._execCmd(touchCmd, function () {
           _this.log('Restart command finished');
@@ -142,15 +174,20 @@ module.exports = {
         this.log('Uploaded');
       },
 
-      _uploadAppJs(appPath) {
+      _uploadAppFiles(appPath) {
         var _this = this;
         var client = this._client;
-        var src = 'app.js';
-        var dest = path.posix.join(appPath, '/', 'app.js');
-        this.log('Uploading app.js');
-        return client.putFile(src, dest).then(function () {
-          _this.log('Uploaded app.js');
-        })
+        var srcFiles = this.readConfig('appFiles');
+        var dest = '';
+        var promises = [];
+        srcFiles.forEach(function(file) {
+          dest = path.posix.join(appPath, '/', file);
+          _this.log('Uploading '+file, {verbose: true});
+          promises.push(client.putFile(file, dest).then(function () {
+            _this.log('Uploaded '+file, {verbose: true});
+          }));
+        });
+        return Promise.all(promises);
       },
 
       _execCmd: function (cmd, success) {
