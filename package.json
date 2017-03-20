@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-deploy-passenger",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An ember-cli-deploy plugin to upload app.js, npm install and passenger reboot.",
   "keywords": [
     "ember-addon",
@@ -21,6 +21,7 @@
     "ember-cli-babel": "^5.1.7",
     "ember-cli-deploy-plugin": "^0.2.9",
     "node-fs": "^0.1.7",
+    "rsync": "^0.6.1",
     "ssh2": "^0.5.4",
     "untildify": "^3.0.2"
   },
