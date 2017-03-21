@@ -13,6 +13,7 @@ module.exports = {
   name: 'ember-cli-deploy-passenger',
 
   createDeployPlugin: function(options) {
+    var activeBranch ='';
     var DeployPlugin = BasePlugin.extend({
       name: options.name,
 
@@ -25,18 +26,19 @@ module.exports = {
         revisionKey: function (context) {
           return context.commandOptions.revision || (context.revisionData && context.revisionData.revisionKey);
         },
-        host: '',
-        username: '',
-        password: null,
-        privateKeyPath: '~/.ssh/id_rsa',
         agent: null,
-        port: 22,
-        path: '~/apps/',
+        appFiles: [],
+        branch: 'development',
         directory: 'tmp/deploy-dist/.',
+        displayCommands: false,
         exclude: false,
         flags: 'rtvu',
-        displayCommands: false,
-        appFiles: []
+        host: '',
+        password: null,
+        path: '~/apps/',
+        port: 22,
+        privateKeyPath: '~/.ssh/id_rsa',
+        username: ''
       },
 
       configure: function (context) {
@@ -61,27 +63,31 @@ module.exports = {
         return new Promise(function(resolve, reject) {
           let git = simpleGit();
           let deployTarget = context.deployTarget;
+          let branch = _this.readConfig('branch');
           _this.log('Deploying branch ' + deployTarget + ' to ' + _this.readConfig('host') + '.');
+
           // get git status
           git.status(function(error, statusSummary){
             if (error) {
               reject(error)
             }
+
             if (statusSummary.files.length > 0) { //git is dirty
               reject('Git: working directory is dirty');
             }
 
+            activeBranch = statusSummary.current;
             // change branch
             git.branchLocal(function(errors, branchSummary){
               if (error) {
                 reject(error)
               }
-              if (branchSummary.all.indexOf(deployTarget) !== -1) {
-                git.checkout(deployTarget, function(error, success) {
+              if (branchSummary.all.indexOf(branch) !== -1) {
+                git.checkout(branch, function(error) {
                   if (error) {
                     reject(error)
                   }
-                  _this.log('Git: branch ' + deployTarget + ' checked out', {verbose: true});
+                  _this.log('Git: branch ' + branch + ' checked out', {verbose: true});
                   var deployEnvLn = 'rm .env.deploy && ln -s .env.' + deployTarget+' .env.deploy';
                   exec(deployEnvLn, function(error) {
                     if (error) {
@@ -91,11 +97,10 @@ module.exports = {
                   });
                 })
               } else {
-                reject('Git: no local branch '+deployTarget);
+                reject('Git: no local branch '+branch);
               }
             });
           });
-
         });
       },
 
@@ -144,6 +149,20 @@ module.exports = {
             revisions: data
           }
         });
+      },
+
+      teardown() {
+        if (activeBranch) {
+          let git = simpleGit();
+          let _this = this;
+          return git.checkout(activeBranch, function (error) {
+            if (error) {
+              Promise.reject(error)
+            }
+            _this.log('Git: reverted, branch ' + activeBranch + ' checked out', {verbose: true});
+            Promise.resolve();
+          });
+        }
       },
 
       _appRestart(appPath) {
