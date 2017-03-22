@@ -8,6 +8,7 @@ var path       = require('path');
 var Rsync      = require('rsync');
 var exec       = require('child_process').exec;
 var simpleGit  = require('simple-git');
+var console  = require('console');
 
 module.exports = {
   name: 'ember-cli-deploy-passenger',
@@ -63,8 +64,9 @@ module.exports = {
         return new Promise(function(resolve, reject) {
           let git = simpleGit();
           let deployTarget = context.deployTarget;
-          let branch = _this.readConfig('branch');
-          _this.log('Deploying branch ' + deployTarget + ' to ' + _this.readConfig('host') + '.');
+          let branch = context.commandOptions.branch || _this.readConfig('branch');
+          let force = context.commandOptions.force || false;
+          _this.log('Deploying branch ' + branch + ' to ' + _this.readConfig('host') + '.');
 
           // get git status
           git.status(function(error, statusSummary){
@@ -72,7 +74,7 @@ module.exports = {
               reject(error)
             }
 
-            if (statusSummary.files.length > 0) { //git is dirty
+            if (!force && statusSummary.files.length > 0) { //git is dirty
               reject('Git: working directory is dirty');
             }
 
