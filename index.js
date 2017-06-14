@@ -2,13 +2,12 @@
 'use strict';
 
 var BasePlugin = require('ember-cli-deploy-plugin');
-var Promise    = require('ember-cli/lib/ext/promise');
+var Promise    = require('rsvp');
 var sshClient  = require('./lib/ssh-client');
 var path       = require('path');
 var Rsync      = require('rsync');
 var exec       = require('child_process').exec;
 var simpleGit  = require('simple-git');
-var console  = require('console');
 
 module.exports = {
   name: 'ember-cli-deploy-passenger',
@@ -71,7 +70,7 @@ module.exports = {
           // get git status
           git.status(function(error, statusSummary){
             if (error) {
-              reject(error)
+              reject(error);
             }
 
             if (!force && statusSummary.files.length > 0) { //git is dirty
@@ -82,12 +81,12 @@ module.exports = {
             // change branch
             git.branchLocal(function(errors, branchSummary){
               if (error) {
-                reject(error)
+                reject(error);
               }
               if (branchSummary.all.indexOf(branch) !== -1) {
                 git.checkout(branch, function(error) {
                   if (error) {
-                    reject(error)
+                    reject(error);
                   }
                   _this.log('Git: branch ' + branch + ' checked out', {verbose: true});
                   var deployEnvLn = 'rm .env.deploy && ln -s .env.' + deployTarget+' .env.deploy';
@@ -97,7 +96,7 @@ module.exports = {
                     }
                     resolve();
                   });
-                })
+                });
               } else {
                 reject('Git: no local branch '+branch);
               }
@@ -124,14 +123,14 @@ module.exports = {
         var activateCmd = 'rm -rf ' + path.posix.join(basePath, distDir) + ' && ln -s ' + path.posix.join(basePath, 'releases', revisionKey) + ' ' + path.posix.join(basePath, distDir) + ' && echo ' + revisionKey +' > '+ path.posix.join(basePath, 'REVISION');
         return this._execCmd(activateCmd, function () {
           _this.log('Revision ' + revisionKey + ' activated.');
-        })
+        });
       },
 
       didActivate() {
         return this._appRestart(this.readConfig('path')); // restart app
       },
 
-      didDeploy: function (context) {
+      didDeploy: function () {
         var deployPath = path.posix.join(this.readConfig('path'), '/');
         return this._npmInstall(deployPath);
       },
@@ -140,7 +139,7 @@ module.exports = {
         return this._generateRevisionData().then(function (data) {
           return {
             revisions: data
-          }
+          };
         });
       },
 
@@ -149,7 +148,7 @@ module.exports = {
         return this._generateRevisionData().then(function (data) {
           return {
             revisions: data
-          }
+          };
         });
       },
 
@@ -159,7 +158,7 @@ module.exports = {
           let _this = this;
           return git.checkout(activeBranch, function (error) {
             if (error) {
-              Promise.reject(error)
+              Promise.reject(error);
             }
             _this.log('Git: reverted, branch ' + activeBranch + ' checked out', {verbose: true});
             Promise.resolve();
@@ -173,7 +172,7 @@ module.exports = {
         this.log('Restarting');
         return this._execCmd(touchCmd, function () {
           _this.log('Restart command finished');
-        })
+        });
       },
 
       _npmInstall(appPath) {
@@ -182,10 +181,10 @@ module.exports = {
         this.log('NPM Install...');
         return this._execCmd(npmCmd, function () {
           _this.log('NPM Finish');
-        })
+        });
       },
 
-      _uploadApp(context) {
+      _uploadApp() {
         this.log('Uploading ...');
         var revisionKey = this.readConfig('revisionKey'),
           targetPath = this.readConfig('username') + '@' + this.readConfig('host') + ':' + this.readConfig('path'),
@@ -244,10 +243,10 @@ module.exports = {
         }
 
         if (this.readConfig('displayCommands')) {
-          this.log(rsync.command())
+          this.log(rsync.command());
         }
 
-        rsync.execute(function (error, code, cmd) {
+        rsync.execute(function () {
           _this.log('Done !');
         });
       },
@@ -257,7 +256,7 @@ module.exports = {
         var releaseDir = path.posix.join(basePath, 'releases');
         var _this = this;
         var activeRelease = null;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
           _this.log('Listing revisions', {verbose: true});
           var catCmd = 'cat ' + path.posix.join(basePath, 'REVISION');
           _this._runCmd(catCmd).then(function (revisionData) {
