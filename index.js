@@ -2,7 +2,7 @@
 'use strict';
 
 var BasePlugin = require('ember-cli-deploy-plugin');
-var Promise    = require('rsvp');
+var RSVP    = require('rsvp');
 var sshClient  = require('./lib/ssh-client');
 var path       = require('path');
 var Rsync      = require('rsync');
@@ -60,7 +60,7 @@ module.exports = {
 
       willBuild(context) {
         var _this = this;
-        return new Promise(function(resolve, reject) {
+        return new RSVP.Promise(function(resolve, reject) {
           let git = simpleGit();
           let deployTarget = context.deployTarget;
           let branch = context.commandOptions.branch || _this.readConfig('branch');
@@ -109,7 +109,7 @@ module.exports = {
         var deployPath = path.posix.join(this.readConfig('path'), '/');
         //do something here to actually deploy your app somewhere
 
-        return Promise.all([
+        return RSVP.Promise.all([
           this._uploadApp(context),
           this._uploadAppFiles(deployPath) // upload app files
         ]);
@@ -158,10 +158,10 @@ module.exports = {
           let _this = this;
           return git.checkout(activeBranch, function (error) {
             if (error) {
-              Promise.reject(error);
+              RSVP.Promise.reject(error);
             }
             _this.log('Git: reverted, branch ' + activeBranch + ' checked out', {verbose: true});
-            Promise.resolve();
+            RSVP.Promise.resolve();
           });
         }
       },
@@ -207,7 +207,7 @@ module.exports = {
             _this.log('Uploaded '+file, {verbose: true});
           }));
         });
-        return Promise.all(promises);
+        return RSVP.Promise.all(promises);
       },
 
       _execCmd: function (cmd, success) {
@@ -256,7 +256,7 @@ module.exports = {
         var releaseDir = path.posix.join(basePath, 'releases');
         var _this = this;
         var activeRelease = null;
-        return new Promise(function (resolve) {
+        return new RSVP.Promise(function (resolve) {
           _this.log('Listing revisions', {verbose: true});
           var catCmd = 'cat ' + path.posix.join(basePath, 'REVISION');
           _this._runCmd(catCmd).then(function (revisionData) {
@@ -278,7 +278,7 @@ module.exports = {
 
       _dirList(path) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new RSVP.Promise(function (resolve, reject) {
           var lsCmd = 'ls ' + path;
           _this.log('Listing directories', {verbose: true});
           _this._runCmd(lsCmd).then(function (result) {
