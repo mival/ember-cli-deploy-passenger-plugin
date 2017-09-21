@@ -30,7 +30,7 @@ module.exports = {
         appFiles: [],
         branch: 'development',
         directory: 'tmp/deploy-dist/.',
-        displayCommands: false,
+        displayCommands: true,
         exclude: false,
         flags: 'rtvu',
         host: '',
@@ -185,13 +185,23 @@ module.exports = {
       },
 
       _uploadApp() {
+        var _this = this;
         this.log('Uploading ...');
         var revisionKey = this.readConfig('revisionKey'),
           targetPath = this.readConfig('username') + '@' + this.readConfig('host') + ':' + this.readConfig('path'),
           rsyncPath = path.posix.join(targetPath, 'releases', '/', revisionKey);
-        this.log(rsyncPath);
-        this._rsync(rsyncPath);
-        this.log('Uploaded');
+        return this._rsync(rsyncPath).then(function () {
+          _this.log('Uploaded');
+          _this.log('Moving...');
+          // symlink rsyncPath ../../shared/assets
+          // mv assets/* /home/domena.cz/apps/frontend/shared/assets
+          var cmd = `mv ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets', '/', '*') } ${path.posix.join(_this.readConfig('path'), '/', 'shared', '/', 'assets')} && ` +
+            `rm -r ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets') } && ` +
+            `ln -s ${path.posix.join(_this.readConfig('path'), '/', 'shared', '/', 'assets')} ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets') }`;
+          return _this._execCmd(cmd, function() {
+            _this.log('Moved');
+          });
+        });
       },
 
       _uploadAppFiles(appPath) {
@@ -216,7 +226,12 @@ module.exports = {
         this.log('Exec cmd: ' + cmd, {verbose: true});
         return client
           .exec(cmd)
-          .then(success, function (e) {
+          .then(function (result) {
+            _this.log('Cmd result:' + typeof(result)==='object' ? JSON.stringify(result) : result);
+            if (typeof (success) !== 'undefined') {
+              success(result);
+            }
+          }, function (e) {
             _this.log('Cmd failed:' + e, {color: 'red'});
           });
       },
@@ -232,22 +247,25 @@ module.exports = {
       },
       _rsync: function (destination) {
         var _this = this;
-        var rsync = new Rsync()
-          .shell('ssh -p ' + this.readConfig('port'))
-          .flags(this.readConfig('flags'))
-          .source(this.readConfig('directory'))
-          .destination(destination);
+        return new RSVP.Promise(function(resolve) {
+          var rsync = new Rsync()
+            .shell('ssh -p ' + _this.readConfig('port'))
+            .flags(_this.readConfig('flags'))
+            .source(_this.readConfig('directory'))
+            .destination(destination);
 
-        if (this.readConfig('exclude')) {
-          rsync.exclude(this.readConfig('exclude'));
-        }
+          if (_this.readConfig('exclude')) {
+            rsync.exclude(_this.readConfig('exclude'));
+          }
 
-        if (this.readConfig('displayCommands')) {
-          this.log(rsync.command());
-        }
+          if (_this.readConfig('displayCommands')) {
+            _this.log(rsync.command());
+          }
 
-        rsync.execute(function () {
-          _this.log('Done !');
+          rsync.execute(function () {
+            _this.log('Done !');
+            resolve();
+          });
         });
       },
 
