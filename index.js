@@ -197,7 +197,6 @@ module.exports = {
           // mv assets/* /home/domena.cz/apps/frontend/shared/assets
           var cmd = `cp ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets', '/', '*') } ${path.posix.join(_this.readConfig('path'), '/', 'shared', '/', 'assets')} && ` +
             `mv ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets') } ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets_bak') } && ` +
-            `rm -r ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets') } && ` +
             `ln -s ${path.posix.join(_this.readConfig('path'), '/', 'shared', '/', 'assets')} ${path.posix.join(_this.readConfig('path'), 'releases', '/', revisionKey, '/', 'assets') }`;
           return _this._execCmd(cmd, function() {
             _this.log('Moved');
