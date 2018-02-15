@@ -89,13 +89,7 @@ module.exports = {
                     reject(error);
                   }
                   _this.log('Git: branch ' + branch + ' checked out', {verbose: true});
-                  var deployEnvLn = 'rm .env.deploy && ln -s .env.' + deployTarget+' .env.deploy';
-                  exec(deployEnvLn, function(error) {
-                    if (error) {
-                      reject(error);
-                    }
-                    resolve();
-                  });
+                  resolve();
                 });
               } else {
                 reject('Git: no local branch '+branch);
