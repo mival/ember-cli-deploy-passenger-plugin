@@ -1,4 +1,3 @@
-/* jshint node: true */
 'use strict';
 
 var BasePlugin = require('ember-cli-deploy-plugin');
@@ -10,7 +9,7 @@ var exec       = require('child_process').exec;
 var simpleGit  = require('simple-git');
 
 module.exports = {
-  name: 'ember-cli-deploy-passenger',
+  name: require('./package').name,
 
   createDeployPlugin: function(options) {
     var activeBranch ='';
@@ -38,7 +37,10 @@ module.exports = {
         path: '~/apps/',
         port: 22,
         privateKeyPath: '~/.ssh/id_rsa',
-        username: ''
+        username: '',
+        passphrase: function (context) {
+          return context.commandOptions.passphrase;
+        },
       },
 
       configure: function (context) {
@@ -62,7 +64,6 @@ module.exports = {
         var _this = this;
         return new RSVP.Promise(function(resolve, reject) {
           let git = simpleGit();
-          let deployTarget = context.deployTarget;
           let branch = context.commandOptions.branch || _this.readConfig('branch');
           let force = context.commandOptions.force || false;
           _this.log('Deploying branch ' + branch + ' to ' + _this.readConfig('host') + '.');
