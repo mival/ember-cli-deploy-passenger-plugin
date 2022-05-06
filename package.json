@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-deploy-passenger",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "An ember-cli-deploy plugin to upload app.js, npm install and passenger reboot.",
   "keywords": [
     "ember-addon",
@@ -40,8 +40,8 @@
     "@glimmer/tracking": "^1.0.2",
     "babel-eslint": "^10.1.0",
     "broccoli-asset-rev": "^3.0.0",
-    "ember-auto-import": "^1.11.2",
-    "ember-cli": "^3.25.3",
+    "ember-auto-import": "^1.12.1",
+    "ember-cli": "^3.28.5",
     "ember-cli-dependency-checker": "^3.2.0",
     "ember-cli-inject-live-reload": "^2.0.2",
     "ember-cli-sri": "^2.1.1",
@@ -54,7 +54,7 @@
     "ember-resolver": "^8.0.2",
     "ember-source": "~3.22.0",
     "ember-source-channel-url": "^3.0.0",
-    "ember-template-lint": "^2.14.0",
+    "ember-template-lint": "^2.21.0",
     "ember-try": "^1.4.0",
     "eslint": "^7.11.0",
     "eslint-plugin-ember": "^9.3.0",
